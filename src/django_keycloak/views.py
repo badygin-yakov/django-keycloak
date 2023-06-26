@@ -38,7 +38,7 @@ class Login(RedirectView):
 
         nonce = Nonce.objects.create(
             redirect_uri=self.request.build_absolute_uri(
-                location=reverse('keycloak_login_complete')),
+                location=reverse('keycloak:login_complete')),
             next_path=self.request.GET.get('next'))
 
         self.request.session['oidc_state'] = str(nonce.state)
@@ -78,7 +78,7 @@ class LoginComplete(RedirectView):
         if 'oidc_state' not in request.session \
                 or request.GET['state'] != request.session['oidc_state']:
             # Missing or incorrect state; login again.
-            return HttpResponseRedirect(reverse('keycloak_login'))
+            return HttpResponseRedirect(reverse('keycloak:login'))
 
         nonce = Nonce.objects.get(state=request.GET['state'])
 
@@ -120,7 +120,7 @@ class Logout(RedirectView):
         if settings.LOGOUT_REDIRECT_URL:
             return resolve_url(settings.LOGOUT_REDIRECT_URL)
 
-        return reverse('keycloak_login')
+        return reverse('keycloak:login')
 
 
 class SessionIframe(TemplateView):

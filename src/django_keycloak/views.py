@@ -2,8 +2,10 @@
 from __future__ import unicode_literals
 
 import logging
+from typing import Optional
 
 from django.shortcuts import resolve_url
+from keycloak import KeycloakOpenID
 
 from django_keycloak.services.oidc_profile import get_remote_user_model
 
@@ -43,8 +45,10 @@ class Login(RedirectView):
 
         self.request.session['oidc_state'] = str(nonce.state)
 
-        authorization_url = self.request.realm.client.openid_api_client\
-            .authorization_url(
+        client: Optional[KeycloakOpenID] = self.request.realm.client.openid_api_client
+
+        authorization_url = client\
+            .auth_url(
                 redirect_uri=nonce.redirect_uri,
                 # modified from 'openid given_name family_name email' to fix invaild scopes,
                 # ref issue https://github.com/oauth2-proxy/oauth2-proxy/issues/1448

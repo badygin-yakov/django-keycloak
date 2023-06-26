@@ -16,7 +16,7 @@ class ServicesRealmRefreshWellKnownOIDCTestCase(
         client.realm._well_known_oidc = 'empty'
         self.realm = client.realm
 
-        self.setup_mock('keycloak.keycloak_openid.KeycloakOpenID.certs',
+        self.setup_mock('keycloak.keycloak_openid.KeycloakOpenID.well_known',
                         return_value={'key': 'value'})
 
     def test_refresh_well_known_oidc(self):

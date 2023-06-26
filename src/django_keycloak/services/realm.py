@@ -79,7 +79,7 @@ def refresh_well_known_oidc(realm: Realm):
         client_secret_key=realm.client.secret,
     )
 
-    realm.well_known_oidc = openid_api_client.certs()
+    realm.well_known_oidc = openid_api_client.well_known()
     realm.save(update_fields=['_well_known_oidc'])
     return realm
 

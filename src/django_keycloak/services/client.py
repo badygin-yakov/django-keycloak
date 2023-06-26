@@ -69,7 +69,7 @@ def get_admin_client(client: Client) -> Optional[KeycloakAdmin]:
     return KeycloakAdmin(connection=get_connection(client.realm), token=token)
 
 
-def get_service_account_profile(client):
+def get_service_account_profile(client: Client):
     """
     Get service account for given client.
 
@@ -85,7 +85,9 @@ def get_service_account_profile(client):
     oidc_profile = django_keycloak.services.oidc_profile._update_or_create(
         client=client,
         token_response=token_response,
-        initiate_time=initiate_time)
+        initiate_time=initiate_time,
+        service_account=True,
+    )
 
     client.service_account_profile = oidc_profile
     client.save(update_fields=['service_account_profile'])
@@ -93,17 +95,22 @@ def get_service_account_profile(client):
     return oidc_profile
 
 
-def get_new_access_token(client):
+def get_new_access_token(client: Client):
     """
     Get client access_token
 
     :param django_keycloak.models.Client client:
     :rtype: str
     """
-    scope = 'realm-management openid'
+    scope = 'manage-users'
 
     initiate_time = timezone.now()
-    token_response = client.openid_api_client.client_credentials(scope=scope)
+    token_response = client.openid_api_client.token(
+        username=f'service-account-{client.client_id}',
+        password=client.secret,
+        grant_type='client_credentials',
+        scope=scope,
+    )
 
     return token_response, initiate_time
 
@@ -125,6 +132,7 @@ def get_access_token(client: Client):
         oidc_profile = django_keycloak.services.oidc_profile.update_tokens(
             token_model=oidc_profile,
             token_response=token_reponse,
-            initiate_time=initiate_time
+            initiate_time=initiate_time,
+            service_account=True,
         )
         return oidc_profile.access_token

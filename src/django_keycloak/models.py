@@ -8,7 +8,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.utils.functional import cached_property
-from keycloak import KeycloakOpenID, KeycloakUMA
+from keycloak import KeycloakOpenID, KeycloakUMA, KeycloakAdmin
 
 logger = logging.getLogger(__name__)
 
@@ -91,9 +91,9 @@ class Client(models.Model):
     )
 
     @cached_property
-    def admin_api_client(self):
+    def admin_api_client(self) -> Optional[KeycloakAdmin]:
         """
-        :rtype: keycloak.admin.KeycloakAdmin
+        :rtype: keycloak.KeycloakAdmin
         """
         import django_keycloak.services.client
         return django_keycloak.services.client.get_admin_client(client=self)

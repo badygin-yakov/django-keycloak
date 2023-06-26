@@ -104,7 +104,7 @@ def update_or_create_user_and_oidc_profile(client, id_token_object):
         UserModel = get_user_model()
         email_field_name = UserModel.get_email_field_name()
         user, _ = UserModel.objects.update_or_create(
-            username=id_token_object['sub'],
+            username=id_token_object['preferred_username'],
             defaults={
                 email_field_name: id_token_object.get('email', ''),
                 'first_name': id_token_object.get('given_name', ''),
@@ -163,7 +163,11 @@ def update_or_create_from_code(code: str, client: Client, redirect_uri: str):
     # Define "initiate_time" before getting the access token to calculate
     # before which time it expires.
     initiate_time = timezone.now()
-    token_response = client.openid_api_client.token(grant_type="code", code=code,redirect_uri=redirect_uri)
+    token_response = client.openid_api_client.token(
+        grant_type="authorization_code",
+        code=code,
+        redirect_uri=redirect_uri,
+    )
 
     return _update_or_create(client=client, token_response=token_response,
                              initiate_time=initiate_time)

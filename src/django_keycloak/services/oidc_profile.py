@@ -67,7 +67,7 @@ def get_or_create_from_id_token(client, id_token):
     id_token_object = client.openid_api_client.decode_token(
         token=id_token,
         key=client.realm.certs,
-        algorithms=client.openid_api_client.well_known[
+        algorithms=client.openid_api_client.well_known()[
             'id_token_signing_alg_values_supported'],
         issuer=issuer
     )
@@ -221,7 +221,7 @@ def _update_or_create(client, token_response, initiate_time):
     token_object = client.openid_api_client.decode_token(
         token=token_response[token_response_key],
         key=client.realm.certs,
-        algorithms=client.openid_api_client.well_known[
+        algorithms=client.openid_api_client.well_known()[
             'id_token_signing_alg_values_supported'],
         issuer=issuer,
         # modified to fix the issue https://github.com/Peter-Slump/django-keycloak/issues/57
@@ -329,6 +329,6 @@ def get_decoded_jwt(oidc_profile):
     return client.openid_api_client.decode_token(
         token=active_access_token,
         key=client.realm.certs,
-        algorithms=client.openid_api_client.well_known[
+        algorithms=client.openid_api_client.well_known()[
             'id_token_signing_alg_values_supported']
     )

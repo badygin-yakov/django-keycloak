@@ -183,7 +183,7 @@ class OpenIdConnectProfileAbstract(TokenModelAbstract):
         return client.openid_api_client.decode_token(
             token=self.access_token,
             key=client.realm.certs,
-            algorithms=client.openid_api_client.well_known[
+            algorithms=client.openid_api_client.well_known()[
                 'id_token_signing_alg_values_supported']
         )
 

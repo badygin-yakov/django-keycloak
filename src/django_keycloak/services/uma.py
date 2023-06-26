@@ -1,7 +1,7 @@
 from django.apps.registry import apps
 from django.utils.text import slugify
 
-from keycloak.exceptions import KeycloakClientError
+from keycloak.exceptions import KeycloakError
 
 import django_keycloak.services.client
 
@@ -50,8 +50,8 @@ def synchronize_resources(client, app_config):
                 ),
                 scopes=scopes
             )
-        except KeycloakClientError as e:
-            if e.original_exc.response.status_code != 409:
+        except KeycloakError as e:
+            if e.response_code != 409:
                 raise
 
 

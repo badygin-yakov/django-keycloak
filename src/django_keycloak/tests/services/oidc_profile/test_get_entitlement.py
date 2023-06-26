@@ -3,8 +3,7 @@ import mock
 from datetime import datetime
 
 from django.test import TestCase
-from keycloak.openid_connect import KeycloakOpenidConnect
-from keycloak.authz import KeycloakAuthz
+from keycloak.openid_connection import KeycloakOpenID
 
 from django_keycloak.factories import OpenIdConnectProfileFactory
 from django_keycloak.tests.mixins import MockTestCaseMixin
@@ -27,9 +26,9 @@ class ServicesKeycloakOpenIDProfileGetActiveAccessTokenTestCase(
             refresh_token='refresh-token'
         )
         self.oidc_profile.realm.client.openid_api_client = mock.MagicMock(
-            spec_set=KeycloakOpenidConnect)
+            spec_set=KeycloakOpenID)
         self.oidc_profile.realm.client.authz_api_client = mock.MagicMock(
-            spec_set=KeycloakAuthz)
+            spec_set=KeycloakOpenID)
         self.oidc_profile.realm.client.authz_api_client.entitlement\
             .return_value = {
                 'rpt': 'RPT_VALUE'

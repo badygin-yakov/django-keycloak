@@ -5,7 +5,7 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from freezegun import freeze_time
-from keycloak.openid_connect import KeycloakOpenidConnect
+from keycloak.keycloak_openid import KeycloakOpenID
 
 from django_keycloak.factories import ClientFactory
 from django_keycloak.models import OpenIdConnectProfile
@@ -23,8 +23,8 @@ class ServicesKeycloakOpenIDProfileUpdateOrCreateTestCase(MockTestCaseMixin,
             realm___well_known_oidc='{"issuer": "https://issuer"}'
         )
         self.client.openid_api_client = mock.MagicMock(
-            spec_set=KeycloakOpenidConnect)
-        self.client.openid_api_client.authorization_code.return_value = {
+            spec_set=KeycloakOpenID)
+        self.client.openid_api_client.token.return_value = {
             'id_token': 'id-token',
             'expires_in': 600,
             'refresh_expires_in': 3600,
@@ -48,8 +48,9 @@ class ServicesKeycloakOpenIDProfileUpdateOrCreateTestCase(MockTestCaseMixin,
             code='some-code',
             redirect_uri='https://redirect'
         )
-        self.client.openid_api_client.authorization_code\
+        self.client.openid_api_client.token \
             .assert_called_once_with(code='some-code',
+                                     grant_type='code',
                                      redirect_uri='https://redirect')
         self.client.openid_api_client.decode_token.assert_called_once_with(
             token='id-token',
@@ -98,8 +99,9 @@ class ServicesKeycloakOpenIDProfileUpdateOrCreateTestCase(MockTestCaseMixin,
             code='some-code',
             redirect_uri='https://redirect'
         )
-        self.client.openid_api_client.authorization_code\
+        self.client.openid_api_client.token \
             .assert_called_once_with(code='some-code',
+                                     grant_type='code',
                                      redirect_uri='https://redirect')
         self.client.openid_api_client.decode_token.assert_called_once_with(
             token='id-token',

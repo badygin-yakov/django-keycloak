@@ -1,13 +1,17 @@
 import logging
 
 from functools import partial
+from typing import Optional
+from urllib.parse import urlparse
 
 from django.utils import timezone
+from keycloak import KeycloakOpenID, KeycloakAdmin, KeycloakUMA, KeycloakOpenIDConnection
 
 from django_keycloak.services.exceptions import TokensExpired
 
 import django_keycloak.services.oidc_profile
-
+from django_keycloak.models import Client
+from django_keycloak.services.realm import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -27,47 +31,42 @@ def get_keycloak_id(client):
     return None
 
 
-def get_authz_api_client(client):
+def get_authz_api_client(client: Client) -> Optional[KeycloakOpenID]:
     """
     :param django_keycloak.models.Client client:
     :rtype: keycloak.authz.KeycloakAuthz
     """
-    return client.realm.realm_api_client.authz(client_id=client.client_id)
+    return client.realm.realm_api_client
 
 
-def get_openid_client(client):
+def get_openid_client(client: Client) -> Optional[KeycloakOpenID]:
     """
     :param django_keycloak.models.Client client:
     :rtype: keycloak.openid_connect.KeycloakOpenidConnect
     """
-    openid = client.realm.realm_api_client.open_id_connect(
-        client_id=client.client_id,
-        client_secret=client.secret
-    )
 
-    if client.realm._well_known_oidc:
-        openid.well_known.contents = client.realm.well_known_oidc
-
-    return openid
+    return client.realm.realm_api_client
 
 
-def get_uma1_client(client):
+def get_uma1_client(client: Client) -> Optional[KeycloakUMA]:
     """
     :type client: django_keycloak.models.Client
-    :rtype: keycloak.uma1.KeycloakUMA1
+    :rtype: keycloak.KeycloakUMA
     """
-    return client.realm.realm_api_client.uma1
+
+    return KeycloakUMA(connection=get_connection(realm=client.realm))
 
 
-def get_admin_client(client):
+def get_admin_client(client: Client) -> Optional[KeycloakAdmin]:
     """
     Get the Keycloak admin client configured for given realm.
 
     :param django_keycloak.models.Client client:
-    :rtype: keycloak.admin.KeycloakAdmin
+    :rtype: keycloak.KeycloakAdmin
     """
-    token = partial(get_access_token, client)
-    return client.realm.realm_api_client.admin.set_token(token=token)
+    token = get_access_token(client)
+
+    return KeycloakAdmin(connection=get_connection(client.realm), token=token)
 
 
 def get_service_account_profile(client):
@@ -109,7 +108,7 @@ def get_new_access_token(client):
     return token_response, initiate_time
 
 
-def get_access_token(client):
+def get_access_token(client: Client):
     """
     Get access token from client's service account.
     :param django_keycloak.models.Client client:

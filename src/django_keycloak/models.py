@@ -1,12 +1,14 @@
 import json
 import logging
 import uuid
+from typing import Optional
 
 from django.contrib.auth.models import Permission
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.utils.functional import cached_property
+from keycloak import KeycloakOpenID, KeycloakUMA
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +59,10 @@ class Realm(models.Model):
     def well_known_oidc(self, content):
         self._well_known_oidc = json.dumps(content)
 
-    _keycloak_realm = None
+    _keycloak_realm: Optional[KeycloakOpenID] = None
 
     @cached_property
-    def realm_api_client(self):
+    def realm_api_client(self) -> Optional[KeycloakOpenID]:
         """
         :rtype: keycloak.realm.Realm
         """
@@ -97,7 +99,7 @@ class Client(models.Model):
         return django_keycloak.services.client.get_admin_client(client=self)
 
     @cached_property
-    def openid_api_client(self):
+    def openid_api_client(self) -> Optional[KeycloakOpenID]:
         """
         :rtype: keycloak.openid_connect.KeycloakOpenidConnect
         """
@@ -105,7 +107,7 @@ class Client(models.Model):
         return django_keycloak.services.client.get_openid_client(client=self)
 
     @cached_property
-    def authz_api_client(self):
+    def authz_api_client(self) -> Optional[KeycloakOpenID]:
         """
         :rtype: keycloak.authz.KeycloakAuthz
         """
@@ -114,7 +116,7 @@ class Client(models.Model):
             client=self)
 
     @cached_property
-    def uma1_api_client(self):
+    def uma1_api_client(self) -> Optional[KeycloakUMA]:
         """
         :rtype: keycloak.uma1.KeycloakUMA1
         """

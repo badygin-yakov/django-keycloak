@@ -9,8 +9,9 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.module_loading import import_string
-from keycloak.exceptions import KeycloakClientError
+from keycloak.exceptions import KeycloakError
 
+from django_keycloak.models import Client, OpenIdConnectProfile
 from django_keycloak.services.exceptions import TokensExpired
 from django_keycloak.remote_user import KeycloakRemoteUser
 
@@ -133,7 +134,7 @@ def get_remote_user_from_profile(oidc_profile):
         userinfo = oidc_profile.realm.client.openid_api_client.userinfo(
             token=oidc_profile.access_token
         )
-    except KeycloakClientError:
+    except KeycloakError:
         return None
 
     # Get the user from the KEYCLOAK_REMOTE_USER_MODEL in the settings
@@ -146,7 +147,7 @@ def get_remote_user_from_profile(oidc_profile):
     return user
 
 
-def update_or_create_from_code(code, client, redirect_uri):
+def update_or_create_from_code(code: str, client: Client, redirect_uri: str):
     """
     Update or create an user based on an authentication code.
     Response as specified in:
@@ -162,8 +163,7 @@ def update_or_create_from_code(code, client, redirect_uri):
     # Define "initiate_time" before getting the access token to calculate
     # before which time it expires.
     initiate_time = timezone.now()
-    token_response = client.openid_api_client.authorization_code(
-        code=code, redirect_uri=redirect_uri)
+    token_response = client.openid_api_client.token(grant_type="code", code=code,redirect_uri=redirect_uri)
 
     return _update_or_create(client=client, token_response=token_response,
                              initiate_time=initiate_time)
@@ -257,7 +257,7 @@ def update_tokens(token_model, token_response, initiate_time):
     return token_model
 
 
-def get_active_access_token(oidc_profile):
+def get_active_access_token(oidc_profile: OpenIdConnectProfile):
     """
     Give access_token and refresh when required.
 
@@ -283,7 +283,7 @@ def get_active_access_token(oidc_profile):
     return oidc_profile.access_token
 
 
-def get_entitlement(oidc_profile):
+def get_entitlement(oidc_profile: OpenIdConnectProfile):
     """
     Get entitlement.
 

@@ -3,10 +3,13 @@ import mock
 from datetime import datetime
 
 from django.test import TestCase
-from keycloak.openid_connect import KeycloakOpenidConnect
+from keycloak.keycloak_openid import KeycloakOpenID
 
-from django_keycloak.factories import ClientFactory, \
-    OpenIdConnectProfileFactory, UserFactory
+from django_keycloak.factories import (
+    ClientFactory,
+    OpenIdConnectProfileFactory,
+    UserFactory,
+)
 from django_keycloak.tests.mixins import MockTestCaseMixin
 
 import django_keycloak.services.oidc_profile
@@ -21,7 +24,7 @@ class ServicesOpenIDProfileGetOrCreateFromIdTokenTestCase(
             realm___well_known_oidc='{"issuer": "https://issuer"}'
         )
         self.client.openid_api_client = mock.MagicMock(
-            spec_set=KeycloakOpenidConnect)
+            spec_set=KeycloakOpenID)
         self.client.openid_api_client.well_known = {
             'id_token_signing_alg_values_supported': ['signing-alg']
         }

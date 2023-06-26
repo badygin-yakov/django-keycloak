@@ -27,8 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-LOGIN_URL = 'keycloak_login'
-LOGOUT_REDIRECT_URL = 'keycloak_login'
+LOGIN_URL = 'keycloak:login'
+LOGOUT_REDIRECT_URL = 'keycloak:login'
 
 SECURE_SSL_REDIRECT = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

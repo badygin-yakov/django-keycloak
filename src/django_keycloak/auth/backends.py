@@ -9,7 +9,7 @@ from jose.exceptions import (
     JWTClaimsError,
     JWTError,
 )
-from keycloak.exceptions import KeycloakClientError
+from keycloak.exceptions import KeycloakError
 
 import django_keycloak.services.oidc_profile
 
@@ -129,9 +129,9 @@ class KeycloakPasswordCredentialsBackend(KeycloakAuthorizationBase):
                     username=username,
                     password=password
                 )
-        except KeycloakClientError:
+        except KeycloakError:
             logger.debug('KeycloakPasswordCredentialsBackend: failed to '
-                         'authenticate.')
+                         'authenticate.', exc_info=True)
         else:
             return keycloak_openid_profile.user
 

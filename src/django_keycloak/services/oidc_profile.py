@@ -89,7 +89,7 @@ def update_or_create_user_and_oidc_profile(client, id_token_object):
     if OpenIdConnectProfileModel.is_remote:
         oidc_profile, _ = OpenIdConnectProfileModel.objects.\
             update_or_create(
-                sub=id_token_object['sub'],
+                sub=id_token_object['preferred_username'],
                 defaults={
                     'realm': client.realm
                 }
@@ -219,7 +219,9 @@ def _update_or_create(client, token_response, initiate_time):
         key=client.realm.certs,
         algorithms=client.openid_api_client.well_known[
             'id_token_signing_alg_values_supported'],
-        issuer=issuer
+        issuer=issuer,
+        # modified to fix the issue https://github.com/Peter-Slump/django-keycloak/issues/57
+        access_token=token_response["access_token"],
     )
 
     oidc_profile = update_or_create_user_and_oidc_profile(

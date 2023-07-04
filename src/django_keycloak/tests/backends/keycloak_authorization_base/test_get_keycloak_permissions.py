@@ -20,14 +20,14 @@ class BackendsKeycloakAuthorizationBaseGetKeycloakPermissionsTestCase(
                 'authorization': {
                     'permissions': [
                         {
-                            'resource_set_name': 'Resource',
+                            'rsname': 'Resource',
                             'scopes': [
                                 'Read',
                                 'Update'
                             ]
                         },
                         {
-                            'resource_set_name': 'Resource2'
+                            'rsname': 'Resource2'
                         }
                     ]
                 }

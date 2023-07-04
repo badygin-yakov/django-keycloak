@@ -39,16 +39,15 @@ def synchronize_resources(client, app_config):
 
     for klass in app_config.get_models():
         scopes = _get_all_permissions(klass._meta)
+        payload = dict(
+            name=klass._meta.label_lower,
+            type=f'urn:{slugify(client.client_id)}:resources:{klass._meta.label_lower}',
+            scopes=scopes or []
+        )
 
         try:
             uma1_client.resource_set_create(
-                token=access_token,
-                name=klass._meta.label_lower,
-                type='urn:{client}:resources:{model}'.format(
-                    client=slugify(client.client_id),
-                    model=klass._meta.label_lower
-                ),
-                scopes=scopes
+                payload=payload,
             )
         except KeycloakError as e:
             if e.response_code != 409:

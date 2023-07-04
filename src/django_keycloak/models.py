@@ -107,15 +107,6 @@ class Client(models.Model):
         return django_keycloak.services.client.get_openid_client(client=self)
 
     @cached_property
-    def authz_api_client(self) -> Optional[KeycloakOpenID]:
-        """
-        :rtype: keycloak.authz.KeycloakAuthz
-        """
-        import django_keycloak.services.client
-        return django_keycloak.services.client.get_authz_api_client(
-            client=self)
-
-    @cached_property
     def uma1_api_client(self) -> Optional[KeycloakUMA]:
         """
         :rtype: keycloak.uma1.KeycloakUMA1

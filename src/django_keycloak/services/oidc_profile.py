@@ -9,7 +9,12 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.module_loading import import_string
-from keycloak.exceptions import KeycloakError
+from keycloak.exceptions import (
+    KeycloakError,
+    raise_error_from_response,
+    KeycloakPostError,
+)
+from keycloak.urls_patterns import URL_TOKEN
 
 from django_keycloak.models import Client, OpenIdConnectProfile
 from django_keycloak.services.exceptions import TokensExpired
@@ -305,11 +310,21 @@ def get_entitlement(oidc_profile: OpenIdConnectProfile):
     """
     access_token = get_active_access_token(oidc_profile=oidc_profile)
 
-    rpt = oidc_profile.realm.client.authz_api_client.entitlement(
-        token=access_token)
+    connection = oidc_profile.realm.client.openid_api_client.connection
+    connection.add_param_headers("Authorization", "Bearer " + access_token)
+    params_path = {"realm-name": oidc_profile.realm.name}
+    print(URL_TOKEN.format(**params_path))
+    data_raw = connection.raw_post(
+        path=URL_TOKEN.format(**params_path),
+        data={
+            'grant_type': 'urn:ietf:params:oauth:grant-type:uma-ticket',
+            'audience': oidc_profile.realm.client.client_id,
+        },
+    )
+    rpt = raise_error_from_response(data_raw, KeycloakPostError)
 
     rpt_decoded = oidc_profile.realm.client.openid_api_client.decode_token(
-        token=rpt['rpt'],
+        token=rpt['access_token'],
         key=oidc_profile.realm.certs,
         options={
             'verify_signature': True,
@@ -317,6 +332,7 @@ def get_entitlement(oidc_profile: OpenIdConnectProfile):
             'iat': True,
             'aud': True
         })
+
     return rpt_decoded
 
 

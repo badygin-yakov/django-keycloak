@@ -90,6 +90,14 @@ class KeycloakAuthorizationBase(object):
         granted_perms = self.get_all_permissions(user_obj, obj)
         return perm in granted_perms
 
+    def has_module_perms(self, user, app_label):
+        if not user.is_active:
+            return False
+        permissions = self.get_all_permissions(user)
+        allowed_app_labels = set([p.split('.')[0] for p in permissions])
+
+        return app_label in allowed_app_labels
+
 
 class KeycloakAuthorizationCodeBackend(KeycloakAuthorizationBase):
 

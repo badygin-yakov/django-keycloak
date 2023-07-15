@@ -313,7 +313,6 @@ def get_entitlement(oidc_profile: OpenIdConnectProfile):
     connection = oidc_profile.realm.client.openid_api_client.connection
     connection.add_param_headers("Authorization", "Bearer " + access_token)
     params_path = {"realm-name": oidc_profile.realm.name}
-    print(URL_TOKEN.format(**params_path))
     data_raw = connection.raw_post(
         path=URL_TOKEN.format(**params_path),
         data={

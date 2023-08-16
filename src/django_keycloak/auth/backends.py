@@ -9,7 +9,7 @@ from jose.exceptions import (
     JWTClaimsError,
     JWTError,
 )
-from keycloak.exceptions import KeycloakClientError
+from keycloak.exceptions import KeycloakError
 
 import django_keycloak.services.oidc_profile
 
@@ -60,8 +60,8 @@ class KeycloakAuthorizationBase(object):
             for p in rpt_decoded['authorization'].get('permissions', []):
                 if 'scopes' in p:
                     for scope in p['scopes']:
-                        if '.' in p['resource_set_name']:
-                            app, model = p['resource_set_name'].split('.', 1)
+                        if '.' in p['rsname']:
+                            app, model = p['rsname'].split('.', 1)
                             permissions.append('{app}.{scope}_{model}'.format(
                                 app=app,
                                 scope=scope,
@@ -70,10 +70,10 @@ class KeycloakAuthorizationBase(object):
                         else:
                             permissions.append('{scope}_{resource}'.format(
                                 scope=scope,
-                                resource=p['resource_set_name']
+                                resource=p['rsname']
                             ))
                 else:
-                    permissions.append(p['resource_set_name'])
+                    permissions.append(p['rsname'])
 
             return permissions
         else:
@@ -89,6 +89,14 @@ class KeycloakAuthorizationBase(object):
 
         granted_perms = self.get_all_permissions(user_obj, obj)
         return perm in granted_perms
+
+    def has_module_perms(self, user, app_label):
+        if not user.is_active:
+            return False
+        permissions = self.get_all_permissions(user)
+        allowed_app_labels = set([p.split('.')[0] for p in permissions])
+
+        return app_label in allowed_app_labels
 
 
 class KeycloakAuthorizationCodeBackend(KeycloakAuthorizationBase):
@@ -129,9 +137,9 @@ class KeycloakPasswordCredentialsBackend(KeycloakAuthorizationBase):
                     username=username,
                     password=password
                 )
-        except KeycloakClientError:
+        except KeycloakError:
             logger.debug('KeycloakPasswordCredentialsBackend: failed to '
-                         'authenticate.')
+                         'authenticate.', exc_info=True)
         else:
             return keycloak_openid_profile.user
 

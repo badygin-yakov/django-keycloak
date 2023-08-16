@@ -5,7 +5,7 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from freezegun import freeze_time
-from keycloak.openid_connect import KeycloakOpenidConnect
+from keycloak.keycloak_openid import KeycloakOpenID
 
 from django_keycloak.factories import ClientFactory
 from django_keycloak.models import OpenIdConnectProfile
@@ -23,22 +23,23 @@ class ServicesKeycloakOpenIDProfileUpdateOrCreateTestCase(MockTestCaseMixin,
             realm___well_known_oidc='{"issuer": "https://issuer"}'
         )
         self.client.openid_api_client = mock.MagicMock(
-            spec_set=KeycloakOpenidConnect)
-        self.client.openid_api_client.authorization_code.return_value = {
+            spec_set=KeycloakOpenID)
+        self.client.openid_api_client.token.return_value = {
             'id_token': 'id-token',
             'expires_in': 600,
             'refresh_expires_in': 3600,
             'access_token': 'access-token',
             'refresh_token': 'refresh-token'
         }
-        self.client.openid_api_client.well_known = {
+        self.client.openid_api_client.well_known.return_value = {
             'id_token_signing_alg_values_supported': ['signing-alg']
         }
         self.client.openid_api_client.decode_token.return_value = {
             'sub': 'some-sub',
             'email': 'test@example.com',
             'given_name': 'Some given name',
-            'family_name': 'Some family name'
+            'family_name': 'Some family name',
+            'preferred_username': 'some-preferred-username'
         }
 
     @freeze_time('2018-03-01 00:00:00')
@@ -48,14 +49,16 @@ class ServicesKeycloakOpenIDProfileUpdateOrCreateTestCase(MockTestCaseMixin,
             code='some-code',
             redirect_uri='https://redirect'
         )
-        self.client.openid_api_client.authorization_code\
+        self.client.openid_api_client.token \
             .assert_called_once_with(code='some-code',
+                                     grant_type='authorization_code',
                                      redirect_uri='https://redirect')
         self.client.openid_api_client.decode_token.assert_called_once_with(
             token='id-token',
             key=dict(),
             algorithms=['signing-alg'],
-            issuer='https://issuer'
+            issuer='https://issuer',
+            access_token='access-token',
         )
 
         profile = OpenIdConnectProfile.objects.get(sub='some-sub')
@@ -70,7 +73,7 @@ class ServicesKeycloakOpenIDProfileUpdateOrCreateTestCase(MockTestCaseMixin,
         ))
 
         user = profile.user
-        self.assertEqual(user.username, 'some-sub')
+        self.assertEqual(profile.user.username, 'some-preferred-username')
         self.assertEqual(user.first_name, 'Some given name')
         self.assertEqual(user.last_name, 'Some family name')
 
@@ -98,14 +101,16 @@ class ServicesKeycloakOpenIDProfileUpdateOrCreateTestCase(MockTestCaseMixin,
             code='some-code',
             redirect_uri='https://redirect'
         )
-        self.client.openid_api_client.authorization_code\
+        self.client.openid_api_client.token \
             .assert_called_once_with(code='some-code',
+                                     grant_type='authorization_code',
                                      redirect_uri='https://redirect')
         self.client.openid_api_client.decode_token.assert_called_once_with(
             token='id-token',
             key=dict(),
             algorithms=['signing-alg'],
-            issuer='https://issuer'
+            issuer='https://issuer',
+            access_token='access-token',
         )
 
         profile.refresh_from_db()
@@ -121,6 +126,6 @@ class ServicesKeycloakOpenIDProfileUpdateOrCreateTestCase(MockTestCaseMixin,
 
         user = profile.user
         user.refresh_from_db()
-        self.assertEqual(user.username, 'some-sub')
+        self.assertEqual(profile.user.username, 'some-preferred-username')
         self.assertEqual(user.first_name, 'Some given name')
         self.assertEqual(user.last_name, 'Some family name')

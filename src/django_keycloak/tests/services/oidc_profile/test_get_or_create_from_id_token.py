@@ -3,10 +3,13 @@ import mock
 from datetime import datetime
 
 from django.test import TestCase
-from keycloak.openid_connect import KeycloakOpenidConnect
+from keycloak.keycloak_openid import KeycloakOpenID
 
-from django_keycloak.factories import ClientFactory, \
-    OpenIdConnectProfileFactory, UserFactory
+from django_keycloak.factories import (
+    ClientFactory,
+    OpenIdConnectProfileFactory,
+    UserFactory,
+)
 from django_keycloak.tests.mixins import MockTestCaseMixin
 
 import django_keycloak.services.oidc_profile
@@ -21,15 +24,16 @@ class ServicesOpenIDProfileGetOrCreateFromIdTokenTestCase(
             realm___well_known_oidc='{"issuer": "https://issuer"}'
         )
         self.client.openid_api_client = mock.MagicMock(
-            spec_set=KeycloakOpenidConnect)
-        self.client.openid_api_client.well_known = {
+            spec_set=KeycloakOpenID)
+        self.client.openid_api_client.well_known.return_value = {
             'id_token_signing_alg_values_supported': ['signing-alg']
         }
         self.client.openid_api_client.decode_token.return_value = {
             'sub': 'some-sub',
             'email': 'test@example.com',
             'given_name': 'Some given name',
-            'family_name': 'Some family name'
+            'family_name': 'Some family name',
+            'preferred_username': 'some-preferred-username'
         }
 
     def test_create_with_new_user_new_profile(self):
@@ -52,7 +56,7 @@ class ServicesOpenIDProfileGetOrCreateFromIdTokenTestCase(
         )
 
         self.assertEqual(profile.sub, 'some-sub')
-        self.assertEqual(profile.user.username, 'some-sub')
+        self.assertEqual(profile.user.username, 'some-preferred-username')
         self.assertEqual(profile.user.email, 'test@example.com')
         self.assertEqual(profile.user.first_name, 'Some given name')
         self.assertEqual(profile.user.last_name, 'Some family name')
@@ -85,7 +89,7 @@ class ServicesOpenIDProfileGetOrCreateFromIdTokenTestCase(
 
         self.assertEqual(profile.sub, 'some-sub')
         self.assertEqual(profile.pk, existing_profile.pk)
-        self.assertEqual(profile.user.username, 'some-sub')
+        self.assertEqual(profile.user.username, 'some-preferred-username')
         self.assertEqual(profile.user.email, 'test@example.com')
         self.assertEqual(profile.user.first_name, 'Some given name')
         self.assertEqual(profile.user.last_name, 'Some family name')
@@ -97,7 +101,7 @@ class ServicesOpenIDProfileGetOrCreateFromIdTokenTestCase(
         Expected: oidc profile is created and user is linked to the profile.
         """
         existing_user = UserFactory(
-            username='some-sub'
+            username='some-preferred-username'
         )
 
         profile = django_keycloak.services.oidc_profile.\
@@ -114,7 +118,7 @@ class ServicesOpenIDProfileGetOrCreateFromIdTokenTestCase(
 
         self.assertEqual(profile.sub, 'some-sub')
         self.assertEqual(profile.user.pk, existing_user.pk)
-        self.assertEqual(profile.user.username, 'some-sub')
+        self.assertEqual(profile.user.username, 'some-preferred-username')
         self.assertEqual(profile.user.email, 'test@example.com')
         self.assertEqual(profile.user.first_name, 'Some given name')
         self.assertEqual(profile.user.last_name, 'Some family name')
@@ -127,7 +131,7 @@ class ServicesOpenIDProfileGetOrCreateFromIdTokenTestCase(
         to it.
         """
         existing_user = UserFactory(
-            username='some-sub'
+            username='some-preferred-username'
         )
 
         existing_profile = OpenIdConnectProfileFactory(
@@ -152,7 +156,7 @@ class ServicesOpenIDProfileGetOrCreateFromIdTokenTestCase(
         self.assertEqual(profile.pk, existing_profile.pk)
         self.assertEqual(profile.sub, 'some-sub')
         self.assertEqual(profile.user.pk, existing_user.pk)
-        self.assertEqual(profile.user.username, 'some-sub')
+        self.assertEqual(profile.user.username, 'some-preferred-username')
         self.assertEqual(profile.user.email, 'test@example.com')
         self.assertEqual(profile.user.first_name, 'Some given name')
         self.assertEqual(profile.user.last_name, 'Some family name')

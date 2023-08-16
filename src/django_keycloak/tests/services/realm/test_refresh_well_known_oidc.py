@@ -2,7 +2,7 @@ import mock
 
 from django.test import TestCase
 
-from django_keycloak.factories import RealmFactory
+from django_keycloak.factories import RealmFactory, ClientFactory
 from django_keycloak.tests.mixins import MockTestCaseMixin
 
 import django_keycloak.services.realm
@@ -12,15 +12,12 @@ class ServicesRealmRefreshWellKnownOIDCTestCase(
         MockTestCaseMixin, TestCase):
 
     def setUp(self):
-        self.realm = RealmFactory(
-            name='test-realm',
-            _well_known_oidc='empty'
-        )
+        client = ClientFactory(client_id='test-client', secret='test-secret')
+        client.realm._well_known_oidc = 'empty'
+        self.realm = client.realm
 
-        keycloak_oidc_mock = mock.MagicMock()
-        keycloak_oidc_mock.well_known.contents = {'key': 'value'}
-        self.setup_mock('keycloak.realm.KeycloakRealm.open_id_connect',
-                        return_value=keycloak_oidc_mock)
+        self.setup_mock('keycloak.keycloak_openid.KeycloakOpenID.well_known',
+                        return_value={'key': 'value'})
 
     def test_refresh_well_known_oidc(self):
         """

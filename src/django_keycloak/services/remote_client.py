@@ -1,6 +1,8 @@
 import logging
+from typing import Optional
 
 from django.utils import timezone
+from keycloak import KeycloakOpenID
 
 from django_keycloak.models import ExchangedToken
 
@@ -22,10 +24,12 @@ def exchange_token(oidc_profile, remote_client):
     active_access_token = django_keycloak.services.oidc_profile\
         .get_active_access_token(oidc_profile=oidc_profile)
 
+    client:Optional[KeycloakOpenID] = oidc_profile.realm.client.openid_api_client
+
     # http://www.keycloak.org/docs/latest/securing_apps/index.html#_token-exchange
-    return oidc_profile.realm.client.openid_api_client.token_exchange(
+    return client.exchange_token(
         audience=remote_client.name,
-        subject_token=active_access_token,
+        token=active_access_token,
         requested_token_type='urn:ietf:params:oauth:token-type:refresh_token'
     )
 

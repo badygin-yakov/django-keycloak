@@ -30,7 +30,7 @@ class ServicesRealmGetRealmApiClientTestCase(
         client = django_keycloak.services.realm.\
             get_realm_api_client(realm=self.realm)
 
-        self.assertEqual(client.server_url, self.server.url)
+        self.assertEqual(client.connection.base_url, self.server.url)
         self.assertEqual(client.realm_name, self.realm.name)
 
     def test_get_realm_api_client_with_internal_url(self):
@@ -45,5 +45,5 @@ class ServicesRealmGetRealmApiClientTestCase(
         client = django_keycloak.services.realm.\
             get_realm_api_client(realm=self.realm)
 
-        self.assertEqual(client.server_url, self.server.internal_url)
+        self.assertEqual(client.connection.base_url, self.server.internal_url)
         self.assertEqual(client.realm_name, self.realm.name)

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.test import TestCase
 from freezegun import freeze_time
-from keycloak.openid_connect import KeycloakOpenidConnect
+from keycloak.keycloak_openid import KeycloakOpenID
 
 from django_keycloak.factories import OpenIdConnectProfileFactory
 from django_keycloak.tests.mixins import MockTestCaseMixin
@@ -23,7 +23,7 @@ class ServicesKeycloakOpenIDProfileGetActiveAccessTokenTestCase(
             refresh_expires_before=datetime(2018, 3, 5, 2, 0, 0)
         )
         self.oidc_profile.realm.client.openid_api_client = mock.MagicMock(
-            spec_set=KeycloakOpenidConnect)
+            spec_set=KeycloakOpenID)
         self.oidc_profile.realm.client.openid_api_client.refresh_token\
             .return_value = {
                 'access_token': 'new-access-token',

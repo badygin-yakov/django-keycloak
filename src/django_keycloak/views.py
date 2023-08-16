@@ -2,8 +2,10 @@
 from __future__ import unicode_literals
 
 import logging
+from typing import Optional
 
 from django.shortcuts import resolve_url
+from keycloak import KeycloakOpenID
 
 from django_keycloak.services.oidc_profile import get_remote_user_model
 
@@ -38,15 +40,19 @@ class Login(RedirectView):
 
         nonce = Nonce.objects.create(
             redirect_uri=self.request.build_absolute_uri(
-                location=reverse('keycloak_login_complete')),
+                location=reverse('keycloak:login_complete')),
             next_path=self.request.GET.get('next'))
 
         self.request.session['oidc_state'] = str(nonce.state)
 
-        authorization_url = self.request.realm.client.openid_api_client\
-            .authorization_url(
+        client: Optional[KeycloakOpenID] = self.request.realm.client.openid_api_client
+
+        authorization_url = client\
+            .auth_url(
                 redirect_uri=nonce.redirect_uri,
-                scope='openid given_name family_name email',
+                # modified from 'openid given_name family_name email' to fix invaild scopes,
+                # ref issue https://github.com/oauth2-proxy/oauth2-proxy/issues/1448
+                scope='openid profile email',
                 state=str(nonce.state)
             )
 
@@ -76,7 +82,7 @@ class LoginComplete(RedirectView):
         if 'oidc_state' not in request.session \
                 or request.GET['state'] != request.session['oidc_state']:
             # Missing or incorrect state; login again.
-            return HttpResponseRedirect(reverse('keycloak_login'))
+            return HttpResponseRedirect(reverse('keycloak:login'))
 
         nonce = Nonce.objects.get(state=request.GET['state'])
 
@@ -118,7 +124,7 @@ class Logout(RedirectView):
         if settings.LOGOUT_REDIRECT_URL:
             return resolve_url(settings.LOGOUT_REDIRECT_URL)
 
-        return reverse('keycloak_login')
+        return reverse('keycloak:login')
 
 
 class SessionIframe(TemplateView):
